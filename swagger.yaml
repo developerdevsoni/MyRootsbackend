@@ -1,0 +1,206 @@
+openapi: 3.0.0
+info:
+  title: Family Root API
+  description: Backend API for Family Root application
+  version: 1.0.0
+servers:
+  - url: http://localhost:3000/api
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+security:
+  - bearerAuth: []
+paths:
+  /auth/register:
+    post:
+      summary: Register a new user
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+                name:
+                  type: string
+      responses:
+        201:
+          description: User registered
+  /auth/login:
+    post:
+      summary: Login user
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+      responses:
+        200:
+          description: Login successful
+  /auth/me:
+    get:
+      summary: Get current user profile
+      tags: [Auth]
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: User profile
+  /tree/create:
+    post:
+      summary: Create a new family tree
+      tags: [Tree]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [title, rootName]
+              properties:
+                title:
+                  type: string
+                rootName:
+                  type: string
+                rootGender:
+                  type: string
+                rootBirthDate:
+                  type: string
+                rootLocation:
+                  type: string
+      responses:
+        201:
+          description: Tree created
+  /tree/user:
+    get:
+      summary: List user's trees
+      tags: [Tree]
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: List of trees
+  /tree/{treeId}:
+    get:
+      summary: Get tree details
+      tags: [Tree]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: treeId
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Tree details
+  /member/add:
+    post:
+      summary: Add a family member
+      tags: [Member]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [treeId, name, relatedMemberId, relationType]
+              properties:
+                treeId:
+                  type: integer
+                name:
+                  type: string
+                gender:
+                  type: string
+                relatedMemberId:
+                  type: integer
+                relationType:
+                  type: string
+                  enum: [parent, child, spouse]
+                birthDate:
+                  type: string
+                location:
+                  type: string
+                imageUrl:
+                  type: string
+      responses:
+        201:
+          description: Member added
+  /member/{memberId}:
+    get:
+      summary: Get member details
+      tags: [Member]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: memberId
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Member details
+    delete:
+      summary: Remove a member
+      tags: [Member]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: memberId
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Member removed
+  /match/my-matches:
+    get:
+      summary: Get current user's ancestor matches
+      tags: [Match]
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: List of matches
+  /upload/member-image:
+    post:
+      summary: Upload member image
+      tags: [Upload]
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                image:
+                  type: string
+                  format: binary
+      responses:
+        200:
+          description: Image uploaded successfully url returned

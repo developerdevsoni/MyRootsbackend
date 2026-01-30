@@ -1,0 +1,85 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+
+model User {
+  id        Int          @id @default(autoincrement())
+  email     String       @unique
+  password  String
+  name      String?
+  createdAt DateTime     @default(now())
+  trees     FamilyTree[]
+}
+
+model FamilyTree {
+  id             Int           @id @default(autoincrement())
+  title          String
+  userId         Int
+  user           User          @relation(fields: [userId], references: [id])
+  rootMemberId   Int?          @unique
+  rootMember     FamilyMember? @relation("TreeRoot", fields: [rootMemberId], references: [id])
+  members        FamilyMember[] @relation("TreeMembers")
+  createdAt      DateTime      @default(now())
+}
+
+model FamilyMember {
+  id              Int              @id @default(autoincrement())
+  treeId          Int
+  tree            FamilyTree       @relation("TreeMembers", fields: [treeId], references: [id])
+  treeRootOf      FamilyTree?      @relation("TreeRoot")
+  name            String
+  gender          String           // "male", "female", "other"
+  birthDate       DateTime?
+  deathDate       DateTime?
+  location        String?
+  imageUrl        String?
+  generationLevel Int              @default(0)
+  createdAt       DateTime         @default(now())
+  
+  // Relations where this member is the "source"
+  relationsFrom   FamilyRelation[] @relation("RelationFrom")
+  // Relations where this member is the "target"
+  relationsTo     FamilyRelation[] @relation("RelationTo")
+}
+
+model FamilyRelation {
+  id              Int          @id @default(autoincrement())
+  memberId        Int
+  relatedMemberId Int
+  relationType    String       // "parent", "child", "spouse"
+  
+  member          FamilyMember @relation("RelationFrom", fields: [memberId], references: [id], onDelete: Cascade)
+  relatedMember   FamilyMember @relation("RelationTo", fields: [relatedMemberId], references: [id], onDelete: Cascade)
+
+  @@unique([memberId, relatedMemberId, relationType])
+}
+
+model AncestorIndex {
+  id              Int      @id @default(autoincrement())
+  userId          Int
+  treeId          Int
+  memberId        Int      @unique
+  normalizedName  String
+  generationLevel Int
+  birthYearApprox Int?
+  location        String?
+}
+
+model AncestorMatch {
+  id              Int      @id @default(autoincrement())
+  memberAId       Int
+  memberBId       Int
+  treeAId         Int
+  treeBId         Int
+  confidenceScore Float
+  createdAt       DateTime @default(now())
+}
