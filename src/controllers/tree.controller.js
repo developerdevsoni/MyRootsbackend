@@ -20,9 +20,13 @@ const listUserTrees = async (req, res) => {
 
 const getDetails = async (req, res) => {
     try {
-        const tree = await treeService.getTreeDetails(req.params.treeId);
-        if (!tree) return res.status(404).json({ message: 'Tree not found' });
-        res.json(tree);
+        const treeStructure = await treeService.getFamilyTree(req.params.treeId);
+        if (!treeStructure || treeStructure.nodes.length === 0) {
+             // Fallback or specific check if tree exists but is empty? 
+             // Logic in buildFamilyTree returns empty nodes array if no members found.
+             // We might want to check if tree exists at all first, but service handles fetching.
+        }
+        res.json(treeStructure);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }

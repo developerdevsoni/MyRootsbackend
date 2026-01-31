@@ -42,25 +42,42 @@ model FamilyMember {
   deathDate       DateTime?
   location        String?
   imageUrl        String?
-  generationLevel Int              @default(0)
+  generationLevel Int              @default(0) // Kept for legacy/caching, but not source of truth
   createdAt       DateTime         @default(now())
   
-  // Relations where this member is the "source"
-  relationsFrom   FamilyRelation[] @relation("RelationFrom")
-  // Relations where this member is the "target"
-  relationsTo     FamilyRelation[] @relation("RelationTo")
+  // New Explicit Relationships
+  parents         ParentChild[]    @relation("Child")
+  children        ParentChild[]    @relation("Parent")
+  
+  // Spouse Relations (Bidirectional in DB, but we strictly use FamilyRelation for this now)
+  spouseRelationsFrom FamilyRelation[] @relation("SpouseFrom")
+  spouseRelationsTo   FamilyRelation[] @relation("SpouseTo")
+}
+
+model ParentChild {
+  id        Int          @id @default(autoincrement())
+  childId   Int
+  parentId  Int
+  role      String       // "father", "mother", "parent"
+
+  child     FamilyMember @relation("Child", fields: [childId], references: [id], onDelete: Cascade)
+  parent    FamilyMember @relation("Parent", fields: [parentId], references: [id], onDelete: Cascade)
+
+  @@unique([childId, parentId])
 }
 
 model FamilyRelation {
   id              Int          @id @default(autoincrement())
   memberId        Int
   relatedMemberId Int
-  relationType    String       // "parent", "child", "spouse"
+  relationType    String       // ONLY "spouse"
+  startDate       DateTime?
+  endDate         DateTime?    // For divorce/separation
   
-  member          FamilyMember @relation("RelationFrom", fields: [memberId], references: [id], onDelete: Cascade)
-  relatedMember   FamilyMember @relation("RelationTo", fields: [relatedMemberId], references: [id], onDelete: Cascade)
+  member          FamilyMember @relation("SpouseFrom", fields: [memberId], references: [id], onDelete: Cascade)
+  relatedMember   FamilyMember @relation("SpouseTo", fields: [relatedMemberId], references: [id], onDelete: Cascade)
 
-  @@unique([memberId, relatedMemberId, relationType])
+  @@unique([memberId, relatedMemberId])
 }
 
 model AncestorIndex {
